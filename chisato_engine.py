@@ -3,6 +3,8 @@ import discord
 from youtube_dl import YoutubeDL
 import os
 
+import settings
+
 current_path = os.path.dirname(os.path.realpath(__file__))
 YDL_OPTIONS = {'format': 'bestaudio', 'noplaylist':'False'}
 FFMPEG_OPTIONS = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn'}
@@ -17,18 +19,7 @@ class Bot(discord.Client):
         self.paused = {}
         self.queue = {}
         self.vc = {}
-        self.commands_description = {
-
-            '?help': 'Show commands description',
-            '?play': 'Play music in the voice',
-            '?play --mp3': 'You can add your file to queue. Attach it',
-            '?stop': 'stop playing music',
-            '?skip': 'skip track',
-            '?queue': 'show queue',
-            '?clear': 'clear queue',
-            '?pause': 'pause playing',
-
-        }
+        self.commands_description = settings.commands_description
         self.commands = {
 
             '?help': self.show_help,
@@ -74,11 +65,11 @@ class Bot(discord.Client):
         try:
             await self.commands[command](message)
         except KeyError:
-            await message.channel.send("Unknown command. Use ?help to see the command list")
+            await message.channel.send(settings.messages['unknown command'])
 
     async def get_vc(self, command):
         if not command.author.voice:
-            await command.channel.send("You must be in voice channel")
+            await command.channel.send(settings.messages['not in vc'])
             return False
         else:
             voicechannel = command.author.voice.channel
@@ -103,14 +94,14 @@ class Bot(discord.Client):
         if guild in self.paused and self.paused[guild]:
             self.paused[guild] = False
             self.vc[guild].resume()
-            await command.channel.send("_Resumed._")
+            await command.channel.send(settings.messages['resumed'])
             return
 
         if '--mp3' in command.content:
             try:
                 attachment = command.attachments[0]
             except IndexError:
-                await command.channel.send("Please, attach `file with music`")
+                await command.channel.send(settings.messages['not mp3 file'])
                 return
             attachment_path = current_path + '/' + attachment.filename
             await attachment.save(fp=attachment_path)
@@ -118,17 +109,20 @@ class Bot(discord.Client):
                 {'title': attachment.filename,
                  'url': attachment_path,}
             )
-            await command.channel.send(f'`{attachment.filename}` added to queue')
-            if self.vc[guild].is_playing():
-                return
-            else:
+            await command.channel.send(f'`{attachment.filename}` added to queue ✅')
+           # if self.vc[guild].is_playing():
+           #     return
+           # else:
+           #     await self.play_queue(command.guild)
+           # return
+            if not self.vc[guild].is_playing():
                 await self.play_queue(command.guild)
             return
 
         try:
             check = command.content.split()[1]
         except IndexError:
-            await command.channel.send("`?play [url]`")
+            await command.channel.send(settings.messages['not track'])
             return
 
         with YoutubeDL(YDL_OPTIONS) as ydl:
@@ -141,10 +135,12 @@ class Bot(discord.Client):
             {'url': url,
              'title': title}
         )
-        await command.channel.send(f'`{title}` added to queue')
-        if self.vc[guild].is_playing():
-            return
-        else:
+        await command.channel.send(f'`{title}` added to queue ✅')
+       # if self.vc[guild].is_playing():
+       #     return
+       # else:
+       #     await self.play_queue(command.guild)
+        if not self.vc[guild].is_playing():
             await self.play_queue(command.guild)
 
     async def show_help(self, command):
@@ -154,10 +150,10 @@ class Bot(discord.Client):
         if not await self.get_vc(command):
             return
         self.vc[command.guild].stop()
-        await command.channel.send("_track skipped._")
+        await command.channel.send(settings.messages['track skipped'])
 
     async def show_queue(self, command):
-        await command.channel.send("Chisato queue:")
+        await command.channel.send(settings.messages['queue'])
         try:
             for track in self.queue[command.guild]:
                 await command.channel.send(f"{track['title']}")
@@ -170,7 +166,7 @@ class Bot(discord.Client):
             return
         self.queue[guild] = []
         self.vc[guild].stop()
-        await command.channel.send("_your queue cleared._")
+        await command.channel.send(settings.messages['your queue cleared'])
 
     async def stop(self, command):
         guild = command.guild
@@ -178,11 +174,11 @@ class Bot(discord.Client):
         await self.vc[guild].disconnect()
         self.vc[guild].cleanup()
         self.paused[guild] = False
-        await command.channel.send("_Successfully stopped._")
+        await command.channel.send(settings.messages['stopped'])
 
     async def pause(self, command):
         if not await self.get_vc(command):
             return
         self.vc[command.guild].pause()
         self.paused[command.guild] = True
-        await command.channel.send("_Paused._")
+        await command.channel.send(settings.messages['paused'])

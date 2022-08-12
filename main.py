@@ -1,4 +1,5 @@
 import chisato_engine
+import settings
 
 client = chisato_engine.Bot()
-client.run('your token here')
+client.run(settings.token)
