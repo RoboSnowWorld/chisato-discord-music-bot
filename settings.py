@@ -1,4 +1,4 @@
-token = 'MTAwMzY1MjQ3NTY2NjAzODg4NQ.GTzN-p.c9nfn1fN9G66FVZYorQa4Nx1nPlmfwoPe5A1fY'
+token = 'MTAwMzY1MjQ3NTY2NjAzODg4NQ.GRFKpr.ks_Vle6bNAtfl_drFAk3AI9rgCYsN8QCAeQN_o'
 
 messages = {
     "unknown command": "Unknown command. Use ?help to see the command list ❌",
@@ -11,6 +11,7 @@ messages = {
     'your queue cleared': '_your queue cleared._',
     'stopped': '_Successfully stopped._',
     'paused': '_Paused._',
+    'added_queue': 'added to queue ✅',
 }
 
 commands_description = {
